@@ -414,19 +414,10 @@ public class RecorderActivity extends AppCompatActivity {
         });
 
         upload.setOnClickListener(view -> {
-            String[] permissions = new String[]{
-                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            };
-            if (EasyPermissions.hasPermissions(RecorderActivity.this, permissions)) {
-                chooseVideoForUpload();
-            } else {
-                EasyPermissions.requestPermissions(
-                        this,
-                        getString(R.string.permission_rationale_upload),
-                        SharedConstants.REQUEST_CODE_PERMISSIONS_UPLOAD,
-                        permissions);
-            }
+            openGallery();
+        });
+        album.setOnClickListener(view -> {
+            openGallery();
         });
         bsb.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
 
@@ -539,6 +530,22 @@ public class RecorderActivity extends AppCompatActivity {
                 startRecording();
             }
         });
+    }
+
+    private void openGallery() {
+        String[] permissions = new String[]{
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        };
+        if (EasyPermissions.hasPermissions(RecorderActivity.this, permissions)) {
+            chooseVideoForUpload();
+        } else {
+            EasyPermissions.requestPermissions(
+                    this,
+                    getString(R.string.permission_rationale_upload),
+                    SharedConstants.REQUEST_CODE_PERMISSIONS_UPLOAD,
+                    permissions);
+        }
     }
 
     public NavController findNavController() {

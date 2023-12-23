@@ -105,7 +105,8 @@ public class SaveToGalleryWorker extends Worker {
                             .setContentText(context.getString(R.string.notification_saved_description))
                             .setContentTitle(context.getString(R.string.notification_saved_title))
                             .setSmallIcon(R.drawable.ic_baseline_local_movies_24)
-                            .setColor(ContextCompat.getColor(context, R.color.colorPrimary))
+                            //.setColor(ContextCompat.getColor(context, R.color.colorPrimary))
+                            .setColor(ContextCompat.getColor(context, R.color.colorYellow))
                             .setTicker(context.getString(R.string.notification_saved_title))
                             .build();
             NotificationManagerCompat nm = NotificationManagerCompat.from(context);

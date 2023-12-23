@@ -224,9 +224,49 @@ public class ClipPageDataSource extends PageKeyedDataSource<Integer, Clip> imple
                     public void onFailure(
                             @Nullable Call<Wrappers.Paginated<Clip>> call,
                             @Nullable Throwable t
-                    ) {
+                    ) /*{
                         Log.e(TAG, "Fetching clips has failed.", t);
                         state.postValue(LoadingState.ERROR);
+                    }*/
+                    {
+                        Log.e(TAG, "Fetching clips has failed.", t);
+                        rest.getVideoWithoutLogin(mine, q, liked, saved, following, user, song, languages, sections, hashtags, mSeed, seen, null, null, null, params.key, count)
+                                .enqueue(new Callback<Wrappers.Paginated<Clip>>() {
+
+                                    @Override
+                                    public void onResponse(
+                                            @Nullable Call<Wrappers.Paginated<Clip>> call,
+                                            @Nullable Response<Wrappers.Paginated<Clip>> response
+                                    ) {
+                                        //noinspection ConstantConditions
+                                        Log.v(TAG, "Server responded with " + response.code() + " status.");
+                                        if (response.isSuccessful()) {
+                                            Wrappers.Paginated<Clip> clips = response.body();
+                                            if (mAds && clips.data.size() == count) {
+                                                List<Clip> copy = new ArrayList<>(clips.data);
+                                                copy.add(createDummy());
+                                                callback.onResult(copy,  2);
+                                            } else {
+                                                callback.onResult(clips.data, 2);
+                                            }
+
+                                            state.postValue(LoadingState.LOADED);
+                                        } else {
+                                            state.postValue(LoadingState.ERROR);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onFailure(
+                                            @Nullable Call<Wrappers.Paginated<Clip>> call,
+                                            @Nullable Throwable t
+                                    ) {
+                                        Log.e(TAG, "Fetching clips has failed.", t);
+                                        state.postValue(LoadingState.ERROR);
+                                    }
+                                });
+
+                        //state.postValue(LoadingState.ERROR);
                     }
                 });
     }
@@ -281,9 +321,50 @@ public class ClipPageDataSource extends PageKeyedDataSource<Integer, Clip> imple
                     public void onFailure(
                             @Nullable Call<Wrappers.Paginated<Clip>> call,
                             @Nullable Throwable t
-                    ) {
+                    )/* {
                         Log.e(TAG, "Fetching clips has failed.", t);
                         state.postValue(LoadingState.ERROR);
+                    }*/
+
+                    {
+                        Log.e(TAG, "Fetching clips has failed.", t);
+                        rest.getVideoWithoutLogin(mine, q, liked, saved, following, user, song, languages, sections, hashtags, mSeed, seen, null, null, null, params.key, count)
+                                .enqueue(new Callback<Wrappers.Paginated<Clip>>() {
+
+                                    @Override
+                                    public void onResponse(
+                                            @Nullable Call<Wrappers.Paginated<Clip>> call,
+                                            @Nullable Response<Wrappers.Paginated<Clip>> response
+                                    ) {
+                                        //noinspection ConstantConditions
+                                        Log.v(TAG, "Server responded with " + response.code() + " status.");
+                                        if (response.isSuccessful()) {
+                                            Wrappers.Paginated<Clip> clips = response.body();
+                                            if (mAds && clips.data.size() == count) {
+                                                List<Clip> copy = new ArrayList<>(clips.data);
+                                                copy.add(createDummy());
+                                                callback.onResult(copy,  2);
+                                            } else {
+                                                callback.onResult(clips.data, 2);
+                                            }
+
+                                            state.postValue(LoadingState.LOADED);
+                                        } else {
+                                            state.postValue(LoadingState.ERROR);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onFailure(
+                                            @Nullable Call<Wrappers.Paginated<Clip>> call,
+                                            @Nullable Throwable t
+                                    ) {
+                                        Log.e(TAG, "Fetching clips has failed.", t);
+                                        state.postValue(LoadingState.ERROR);
+                                    }
+                                });
+
+                        //state.postValue(LoadingState.ERROR);
                     }
                 });
     }

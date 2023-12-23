@@ -21,16 +21,16 @@ public class IntroductionActivity extends IntroActivity {
         addSlide(new SimpleSlide.Builder()
                 .title(R.string.slide_1_title)
                 .description(R.string.slide_1_description)
-                .image(R.drawable.intro_1_image)
-                .background(R.color.colorIntro1Background)
-                .backgroundDark(R.color.colorIntro1Buttons)
+                .image(R.drawable.intro_image1)
+                .background(R.color.quantum_black_100)
+                .backgroundDark(R.color.colorGrey2)
                 .build());
         addSlide(new SimpleSlide.Builder()
                 .title(R.string.slide_2_title)
                 .description(R.string.slide_2_description)
-                .image(R.drawable.intro_2_image)
-                .background(R.color.colorIntro2Background)
-                .backgroundDark(R.color.colorIntro2Buttons)
+                .image(R.drawable.intro_image2)
+                .background(R.color.quantum_black_100)
+                .backgroundDark(R.color.colorGrey2)
                 .build());
     }
 }

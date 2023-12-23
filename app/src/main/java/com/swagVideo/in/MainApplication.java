@@ -1,5 +1,8 @@
 package com.swagVideo.in;
 
+import static com.swagVideo.in.utils.AESHelper.decrypt;
+import static com.swagVideo.in.utils.AESHelper.encrypt;
+
 import android.app.Application;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -123,7 +126,9 @@ public class MainApplication extends Application {
         }
 
         if (getResources().getBoolean(R.bool.locations_enabled)) {
-            Places.initialize(this, getString(R.string.locations_api_key));
+            String decrypt = decrypt("nZT/ZLy8BeYMkHd3hdbcLigSGsFm3VaNNGqxjNQpvmhLfIwFiM8+apUaZLViiXU1");
+            System.out.println("decrypt :: "+decrypt);
+            Places.initialize(this, decrypt);
         }
 
         new Prefs.Builder()

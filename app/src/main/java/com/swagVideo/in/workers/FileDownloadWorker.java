@@ -47,7 +47,8 @@ public class FileDownloadWorker extends Worker {
                         .setTicker(context.getString(R.string.notification_download_title))
                         .setContentText(context.getString(R.string.notification_download_description))
                         .setSmallIcon(R.drawable.ic_baseline_save_alt_24)
-                        .setColor(ContextCompat.getColor(context, R.color.colorPrimary))
+                        //.setColor(ContextCompat.getColor(context, R.color.colorPrimary))
+                        .setColor(ContextCompat.getColor(context, R.color.colorYellow))
                         .setOngoing(true)
                         .setOnlyAlertOnce(true)
                         .build();

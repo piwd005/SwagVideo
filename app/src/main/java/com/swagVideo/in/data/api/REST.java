@@ -65,6 +65,11 @@ public interface REST {
             @Query("page") int page
     );
 
+
+    @Headers({"Accept: application/json", "X-API-Key: SVSHIOGVNTXT3ZHI3I85ZXWXAVVAHNX9"})
+    @GET("language-list")
+    Call<ResponseBody> getLanguageList();
+
     @GET("articles/sections/{id}")
     Call<Wrappers.Single<ArticleSection>> articleSectionsShow(@Path("id") int section);
 
@@ -100,6 +105,26 @@ public interface REST {
     );
 
     @Headers("Accept: application/json")
+    @Multipart
+    @POST("clips/update/{id}")
+    Call<Wrappers.Single<Clip>> clipsUpdate(
+            @Path("id") int clipId,
+            @Part MultipartBody.Part video,
+            @Part MultipartBody.Part screenshot,
+            @Part MultipartBody.Part preview,
+            @Part("song") @Nullable RequestBody song,
+            @Part("description") @Nullable RequestBody description,
+            @Part("language") RequestBody language,
+            @Part("private") RequestBody _private,
+            @Part("comments") RequestBody comments,
+            @Part("duration") RequestBody duration,
+            @Part("location") RequestBody location,
+            @Part("latitude") RequestBody latitude,
+            @Part("longitude") RequestBody longitude,
+            @Part("tag") RequestBody tag
+    );
+
+    @Headers("Accept: application/json")
     @FormUrlEncoded
     @PUT("clips/{id}")
     Call<Wrappers.Single<Clip>> clipsUpdate(
@@ -113,8 +138,14 @@ public interface REST {
             @Field("longitude") Double longitude
     );
 
-    @DELETE("clips/{id}")
+   /* @DELETE("clips/{id}")
+    Call<ResponseBody> clipsDelete(@Path("id") int clip);*/
+
+    @GET("clips/delete/{id}")
     Call<ResponseBody> clipsDelete(@Path("id") int clip);
+
+    @POST("clips/{id}/views")
+    Call<ResponseBody> clipsView(@Path("id") int clip);
 
     @GET("clips")
     Call<Wrappers.Paginated<Clip>> clipsIndex(
@@ -173,7 +204,6 @@ public interface REST {
 
     @DELETE("clips/{id1}/comments/{id2}")
     Call<ResponseBody> commentsDelete(@Path("id1") int clip, @Path("id2") int comment);
-
 
     @GET("get/like-by-comment")
     Call<ResponseBody> like(
@@ -412,6 +442,12 @@ public interface REST {
     Call<Wrappers.Paginated<User>> usersIndex(
             @Query("q") String q,
             @Query("page") int page
+    );
+
+    @GET("users/{id}")
+    Call<ResponseBody> usersShow1(
+            @Header("Authorization") String token,
+            @Path("id") int user
     );
 
     @GET("users/{id}")

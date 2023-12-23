@@ -61,8 +61,9 @@ public class FirebaseMessageService extends FirebaseMessagingService {
                     .setAutoCancel(true)
                     .setContentText(notification.getBody())
                     .setContentTitle(notification.getTitle())
-                    .setSmallIcon(R.drawable.ic_notification)
-                    .setColor(ContextCompat.getColor(this, R.color.colorPrimary));
+                    .setSmallIcon(R.drawable.app_icon);
+                   /* .setSmallIcon(R.drawable.ic_notification)
+                    .setColor(ContextCompat.getColor(this, R.color.colorPrimary));*/
             if (notification.getImageUrl() != null) {
                 builder.setLargeIcon(downloadImage(notification.getImageUrl()));
             }

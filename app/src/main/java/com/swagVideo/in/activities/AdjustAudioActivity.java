@@ -57,6 +57,8 @@ import com.swagVideo.in.workers.SplitAudioWorker;
 
 public class AdjustAudioActivity extends AppCompatActivity implements AnalyticsListener {
 
+    public static final String EXTRA_CLIP_ID = "clip_id";
+    public static final String EXTRA_CLIP_DESC = "clip_desc";
     public static final String EXTRA_VIDEO = "video";
     public static final String EXTRA_SONG = "song";
     public static final String EXTRA_SONG_ID = "song_id";
@@ -67,6 +69,8 @@ public class AdjustAudioActivity extends AppCompatActivity implements AnalyticsL
 
     private String mVideo, mVideoAudio, mSong;
     private int mSongId;
+    private int mClipId;
+    private String mClipDesc;
 
     private MediaPlayer mAudioPlayerV, mAudioPlayerS;
     private SimpleExoPlayer mVideoPlayer;
@@ -105,7 +109,9 @@ public class AdjustAudioActivity extends AppCompatActivity implements AnalyticsL
         mModel = new ViewModelProvider(this).get(AdjustAudioActivityViewModel.class);
         mVideo = getIntent().getStringExtra(EXTRA_VIDEO);
         mSong = getIntent().getStringExtra(EXTRA_SONG);
+        mClipDesc = getIntent().getStringExtra(EXTRA_CLIP_DESC);
         mSongId = getIntent().getIntExtra(EXTRA_SONG_ID, 0);
+        mClipId = getIntent().getIntExtra(EXTRA_CLIP_ID, 0);
         mVideoPlayer = new SimpleExoPlayer.Builder(this).build();
         mVideoPlayer.addAnalyticsListener(this);
         mVideoPlayer.setVolume(0);
@@ -197,10 +203,12 @@ public class AdjustAudioActivity extends AppCompatActivity implements AnalyticsL
             intent.putExtra(FilterActivity.EXTRA_VIDEO, file.getAbsolutePath());
             intent.putExtra(FilterActivity.EXTRA_SONG_ID, mSongId);
         } else {*/
-            intent = new Intent(this, UploadActivity.class);
-            intent.putExtra(UploadActivity.EXTRA_VIDEO, file.getAbsolutePath());
-            intent.putExtra(UploadActivity.EXTRA_SONG_ID, mSongId);
-    //    }
+        intent = new Intent(this, UploadActivity.class);
+        intent.putExtra(UploadActivity.EXTRA_VIDEO, file.getAbsolutePath());
+        intent.putExtra(UploadActivity.EXTRA_SONG_ID, mSongId);
+        intent.putExtra(UploadActivity.EXTRA_CLIP_ID, mClipId);
+        intent.putExtra(UploadActivity.EXTRA_CLIP_DESC, mClipDesc);
+        //    }
 
         startActivity(intent);
         finish();

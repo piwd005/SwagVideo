@@ -79,6 +79,8 @@ import com.swagVideo.in.workers.UploadClipWorker;
 
 public class UploadActivity extends AppCompatActivity {
 
+    public static final String EXTRA_CLIP_ID = "clip_id";
+    public static final String EXTRA_CLIP_DESC = "clip_desc";
     public static final String EXTRA_DRAFT = "draft";
     public static final String EXTRA_SONG_ID = "song_id";
     public static final String EXTRA_VIDEO = "video";
@@ -91,6 +93,8 @@ public class UploadActivity extends AppCompatActivity {
     private String mVideo;
     private UploadActivityViewModel mModel;
     private int mSongId;
+    private int mClipId;
+    private String mClipDesc;
     private LocationManager locationManager;
     private LocationListener locationListener;
     private Geocoder geocoder;
@@ -98,7 +102,7 @@ public class UploadActivity extends AppCompatActivity {
     private String locality="";
     private String tag="";
     private EditText tvHashtag;
-   // private double dll;
+    // private double dll;
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -134,7 +138,7 @@ public class UploadActivity extends AppCompatActivity {
         title.setText(R.string.upload_label);
         ImageButton done = findViewById(R.id.header_more);
         done.setImageResource(R.drawable.ic_baseline_check_24);
-       // tvHashtag = findViewById(R.id.tvHashtag);
+        // tvHashtag = findViewById(R.id.tvHashtag);
         //  tvHashtag.getEditText().setText(mModel.tag);
 
         done.setOnClickListener(new View.OnClickListener() {
@@ -145,7 +149,7 @@ public class UploadActivity extends AppCompatActivity {
                 if (tag.equals(""))
                     tvHashtag.setError("Please enter HASHTAG");
                 else*/
-                    uploadToServer();
+                uploadToServer();
             }
         });
         mModel = new ViewModelProvider(this).get(UploadActivityViewModel.class);
@@ -161,8 +165,10 @@ public class UploadActivity extends AppCompatActivity {
             mModel.longitude = mDraft.longitude;
             mModel.tag = mDraft.tag;
         } else {
+            mClipId = getIntent().getIntExtra(EXTRA_CLIP_ID, 0);
             mSongId = getIntent().getIntExtra(EXTRA_SONG_ID, -1);
             mVideo = getIntent().getStringExtra(EXTRA_VIDEO);
+            mClipDesc = getIntent().getStringExtra(EXTRA_CLIP_DESC);
         }
 
         Bitmap image = VideoUtil.getFrameAtTime(mVideo, TimeUnit.SECONDS.toMicros(3));
@@ -212,8 +218,14 @@ public class UploadActivity extends AppCompatActivity {
                 pickLocation();
             }
         });
+
         TextInputLayout description = findViewById(R.id.description);
+        if(mClipDesc !=null){
+            mModel.description=mClipDesc;
+        }
         description.getEditText().setText(mModel.description);
+
+
         disposable = RxTextView.afterTextChangeEvents(description.getEditText())
                 .skipInitialValue()
                 .subscribe(e -> {
@@ -416,6 +428,7 @@ public class UploadActivity extends AppCompatActivity {
         OneTimeWorkRequest request;
         if (mDraft != null) {
             Data data = new Data.Builder()
+                    .putInt(UploadClipWorker.KEY_CLIP_ID, mClipId)
                     .putInt(UploadClipWorker.KEY_SONG, mSongId)
                     .putString(UploadClipWorker.KEY_VIDEO, mDraft.video)
                     .putString(UploadClipWorker.KEY_SCREENSHOT, mDraft.screenshot)
@@ -427,7 +440,7 @@ public class UploadActivity extends AppCompatActivity {
                     .putString(UploadClipWorker.KEY_LOCATION, locality)
                     .putDouble(UploadClipWorker.KEY_LATITUDE, lat)
                     .putDouble(UploadClipWorker.KEY_LONGITUDE, longi)
-                 //   .putString(UploadClipWorker.KEY_TAG, tag)
+                    //   .putString(UploadClipWorker.KEY_TAG, tag)
                     .build();
             request = new OneTimeWorkRequest.Builder(UploadClipWorker.class)
                     .setInputData(data)
@@ -455,6 +468,7 @@ public class UploadActivity extends AppCompatActivity {
                     .setInputData(data2)
                     .build();
             Data data3 = new Data.Builder()
+                    .putInt(UploadClipWorker.KEY_CLIP_ID, mClipId)
                     .putInt(UploadClipWorker.KEY_SONG, mSongId)
                     .putString(UploadClipWorker.KEY_VIDEO, video.getAbsolutePath())
                     .putString(UploadClipWorker.KEY_SCREENSHOT, screenshot.getAbsolutePath())
@@ -466,7 +480,7 @@ public class UploadActivity extends AppCompatActivity {
                     .putString(UploadClipWorker.KEY_LOCATION, locality)
                     .putDouble(UploadClipWorker.KEY_LATITUDE, lat)
                     .putDouble(UploadClipWorker.KEY_LONGITUDE, longi)
-                   // .putString(UploadClipWorker.KEY_TAG, tag)
+                    // .putString(UploadClipWorker.KEY_TAG, tag)
                     .build();
             request = new OneTimeWorkRequest.Builder(UploadClipWorker.class)
                     .setInputData(data3)

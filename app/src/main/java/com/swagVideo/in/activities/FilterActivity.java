@@ -54,6 +54,8 @@ import com.swagVideo.in.workers.VideoFilterWorker;
 
 public class FilterActivity extends AppCompatActivity {
 
+    public static final String EXTRA_CLIP_ID = "clip_id";
+    public static final String EXTRA_CLIP_DESC = "clip_desc";
     public static final String EXTRA_AUDIO = "audio";
     public static final String EXTRA_SONG_ID = "song_id";
     public static final String EXTRA_VIDEO = "video";
@@ -62,6 +64,8 @@ public class FilterActivity extends AppCompatActivity {
     private FilterActivityViewModel mModel;
     private SimpleExoPlayer mPlayer;
     private GPUPlayerView mPlayerView;
+    private int mClipId;
+    private String mClipDesc;
     private int mSong;
     private String mVideo;
     private String mAudio;
@@ -76,6 +80,8 @@ public class FilterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_filter);
         mModel = new ViewModelProvider(this).get(FilterActivityViewModel.class);
+        mClipId = getIntent().getIntExtra(EXTRA_CLIP_ID,0);
+        mClipDesc = getIntent().getStringExtra(EXTRA_CLIP_DESC);
         mAudio = getIntent().getStringExtra(EXTRA_AUDIO);
         mSong = getIntent().getIntExtra(EXTRA_SONG_ID, 0);
         mVideo = getIntent().getStringExtra(EXTRA_VIDEO);
@@ -203,12 +209,14 @@ public class FilterActivity extends AppCompatActivity {
         startActivity(intent);
         finish();*/
 
-         {
+        {
             Intent intent = new Intent(this, TrimmerActivity.class);
             if (mAudio != null) {
                 intent.putExtra(TrimmerActivity.EXTRA_AUDIO, mAudio);
             }
 
+            intent.putExtra(TrimmerActivity.EXTRA_CLIP_ID,mClipId);
+            intent.putExtra(TrimmerActivity.EXTRA_CLIP_DESC,mClipDesc);
             intent.putExtra(TrimmerActivity.EXTRA_SONG_ID,mSong);
             intent.putExtra(TrimmerActivity.EXTRA_VIDEO, copy.getAbsolutePath());
             startActivity(intent);

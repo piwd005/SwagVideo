@@ -1,6 +1,7 @@
 package com.swagVideo.in.fragments;
 
 import android.annotation.SuppressLint;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -11,6 +12,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,11 +45,16 @@ import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.kaopiz.kprogresshud.KProgressHUD;
 
+import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 
+import com.pixplicity.easyprefs.library.Prefs;
 import com.swagVideo.in.MainApplication;
 import com.swagVideo.in.R;
+import com.swagVideo.in.SharedConstants;
 import com.swagVideo.in.activities.MainActivity;
+import com.swagVideo.in.activities.VerificationActivity;
 import com.swagVideo.in.common.LoadingState;
 import com.swagVideo.in.data.ClipDataSource;
 import com.swagVideo.in.data.api.REST;
@@ -163,9 +170,16 @@ public class ProfileFragment extends Fragment implements SocialSpanUtil.OnSocial
             if (user != null && user.me) {
                 menu = user.verified ? R.menu.auth_profile_menu_verified : R.menu.auth_profile_menu;
             }
-
+            
             PopupMenu popup = new PopupMenu(requireContext(), v);
             popup.getMenuInflater().inflate(menu, popup.getMenu());
+            try {
+                Method method = popup.getMenu().getClass().getDeclaredMethod("setOptionalIconsVisible", boolean.class);
+                method.setAccessible(true);
+                method.invoke(popup.getMenu(), true);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             popup.setOnMenuItemClickListener(item -> {
                 switch (item.getItemId()) {
                     case R.id.edit:
@@ -179,6 +193,15 @@ public class ProfileFragment extends Fragment implements SocialSpanUtil.OnSocial
                         break;
                     case R.id.settings:
                         ((MainActivity) requireActivity()).showAbout();
+                        break;
+                    case R.id.wallet:
+                        Dialog dialog=new Dialog(requireActivity(),android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+                        dialog.setContentView(R.layout.dialog_wallet_popup);
+                        ImageView ivClose = dialog.findViewById(R.id.iv_close);
+                        ivClose.setOnClickListener(view1 -> {
+                            dialog.dismiss();
+                        });
+                        dialog.show();
                         break;
                 }
 
@@ -378,6 +401,7 @@ public class ProfileFragment extends Fragment implements SocialSpanUtil.OnSocial
             }
         });
         if (user.followed()) {
+            if(user.followersCount>0)
             user.followersCount--;
         } else {
             user.followersCount++;
@@ -418,6 +442,49 @@ public class ProfileFragment extends Fragment implements SocialSpanUtil.OnSocial
             @Override
             public void onFailure(
                     @Nullable Call<Wrappers.Single<User>> call,
+                    @Nullable Throwable t
+            ) {
+                Log.e(TAG, "Failed when trying to retrieve profile.", t);
+                mModel1.state.postValue(LoadingState.ERROR);
+            }
+        });
+    }
+
+
+    private void loadUser1() {
+        mModel1.state.postValue(LoadingState.LOADING);
+        REST rest = MainApplication.getContainer().get(REST.class);
+        Call<ResponseBody> call;
+        String token =  Prefs.getString(SharedConstants.PREF_SERVER_TOKEN,"");
+            call = rest.usersShow1("Bearer" + Prefs.getString(SharedConstants.PREF_SERVER_TOKEN,""),mUser);
+
+        call.enqueue(new Callback<ResponseBody>() {
+
+            @Override
+            public void onResponse(
+                    @Nullable Call<ResponseBody> call,
+                    @Nullable Response<ResponseBody> response
+            ) {
+                try {
+                    String res = response.body().string();
+
+                    int code = response != null ? response.code() : -1;
+                    Log.v(TAG, "Fetching user profile returned " + code + '.');
+                if (code == 200) {
+                   // mModel1.user.postValue(response.body().data);
+                    mModel2.isProfileInvalid = false;
+                    mModel1.state.postValue(LoadingState.LOADED);
+                } else {
+                    mModel1.state.postValue(LoadingState.ERROR);
+                }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(
+                    @Nullable Call<ResponseBody> call,
                     @Nullable Throwable t
             ) {
                 Log.e(TAG, "Failed when trying to retrieve profile.", t);
@@ -594,7 +661,8 @@ public class ProfileFragment extends Fragment implements SocialSpanUtil.OnSocial
     private void showRequestVerification() {
         User user = mModel1.user.getValue();
         if (user != null) {
-            ((MainActivity) requireActivity()).showRequestVerification();
+           // ((MainActivity) requireActivity()).showRequestVerification();
+            startActivity(new Intent(getActivity(), VerificationActivity.class));
         }
     }
 

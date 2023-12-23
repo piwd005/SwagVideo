@@ -181,7 +181,6 @@ public class TrendFragment extends Fragment {
             if (source.contestWinner != null && source.contestWinner.equals("1"))
             ivWinner.setVisibility(View.VISIBLE);
             tvView.setText(String.valueOf(source.viewsCount));
-            tvView.setText(String.valueOf(source.viewsCount));
             tvUserName.setText(String.valueOf(source.getUser().name));
             Glide.with(this).load(source.getGif()).fitCenter().error(R.mipmap.ic_app_icon).into(iv);
             Glide.with(this).load(source.getUser().photo).apply(new RequestOptions().circleCrop()).error(R.drawable.user).into(ivUser);

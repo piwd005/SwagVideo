@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,6 +30,8 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
@@ -36,18 +39,26 @@ import androidx.work.WorkRequest;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.facebook.drawee.view.SimpleDraweeView;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.firebase.dynamiclinks.DynamicLink;
+import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
+import com.google.firebase.dynamiclinks.ShortDynamicLink;
+import com.google.gson.Gson;
 import com.kaopiz.kprogresshud.KProgressHUD;
 import com.pixplicity.easyprefs.library.Prefs;
+import com.swagVideo.in.BuildConfig;
 import com.swagVideo.in.MainApplication;
 import com.swagVideo.in.R;
 import com.swagVideo.in.SharedConstants;
+import com.swagVideo.in.activities.FilterActivity;
 import com.swagVideo.in.activities.MainActivity;
 import com.swagVideo.in.activities.RecorderActivity;
 import com.swagVideo.in.ads.BannerAdProvider;
 import com.swagVideo.in.common.DiffUtilCallback;
 import com.swagVideo.in.common.LoadingState;
+import com.swagVideo.in.common.SharingTarget;
 import com.swagVideo.in.data.ClipDataSource;
 import com.swagVideo.in.data.ClipItemDataSource;
 import com.swagVideo.in.data.api.REST;
@@ -56,19 +67,24 @@ import com.swagVideo.in.data.models.Clip;
 import com.swagVideo.in.data.models.Song;
 import com.swagVideo.in.data.models.Wrappers;
 import com.swagVideo.in.utils.AdsUtil;
+import com.swagVideo.in.utils.TempUtil;
 import com.swagVideo.in.utils.TextFormatUtil;
 import com.swagVideo.in.utils.VideoUtil;
+import com.swagVideo.in.workers.SaveToGalleryWorker;
 
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.Executor;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import jp.wasabeef.recyclerview.adapters.SlideInBottomAnimationAdapter;
 import okhttp3.ResponseBody;
+import pub.devrel.easypermissions.AfterPermissionGranted;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -86,6 +102,8 @@ public class ClipGridFragment extends Fragment {
     private MainActivity.MainActivityViewModel mModel2;
     private Bundle mParams;
     private String mTitle;
+
+    KProgressHUD progress;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -153,6 +171,7 @@ public class ClipGridFragment extends Fragment {
 
         MaterialCardView mcvHas = view.findViewById(R.id.mcvHas);
         TextView tvUserName = view.findViewById(R.id.tvUserName);
+        TextView tvView = view.findViewById(R.id.tvView);
         if(mTitle != null){
             mcvHas.setBackgroundDrawable(getContext().getResources().getDrawable(R.drawable.bg_round_red_yellow_sheet3));
             tvUserName.setText(mTitle.split("#")[1]);
@@ -166,7 +185,10 @@ public class ClipGridFragment extends Fragment {
         GridLayoutManager glm = new GridLayoutManager(requireContext(), 3);
         //LinearLayoutManager glm =new LinearLayoutManager(getActivity(), RecyclerView.HORIZONTAL, false);
         clips.setLayoutManager(glm);
-        mModel1.clips.observe(getViewLifecycleOwner(), adapter::submitList);
+        mModel1.clips.observe(
+                getViewLifecycleOwner(),
+                adapter::submitList
+        );
         SwipeRefreshLayout swipe = view.findViewById(R.id.swipe);
         swipe.setOnRefreshListener(() -> {
             ClipItemDataSource source = mModel1.factory.source.getValue();
@@ -174,6 +196,7 @@ public class ClipGridFragment extends Fragment {
                 source.invalidate();
             }
         });
+
         View empty = view.findViewById(R.id.empty);
         View loading = view.findViewById(R.id.loading);
         mModel1.state1.observe(getViewLifecycleOwner(), state -> {
@@ -182,6 +205,7 @@ public class ClipGridFragment extends Fragment {
             }
 
             List<?> list = mModel1.clips.getValue();
+            System.out.println("#hastag final::== "+new Gson().toJson(list));
             if (state == LoadingState.LOADING) {
                 empty.setVisibility(View.GONE);
             } else {
@@ -189,7 +213,23 @@ public class ClipGridFragment extends Fragment {
             }
 
             loading.setVisibility(state == LoadingState.LOADING ? View.VISIBLE : View.GONE);
+
+            int viewCount=0;
+            try {
+                for (int i = 0; i < list.size(); i++) {
+                    Clip clip = (Clip) list.get(i);
+                    viewCount +=clip.viewsCount;
+                }
+                tvView.setText(viewCount + " View");
+            }catch (Exception e){
+                e.printStackTrace();
+                tvView.setVisibility(View.GONE);
+            }
+            if(viewCount==0){
+                tvView.setVisibility(View.GONE);
+            }
         });
+
         View song = view.findViewById(R.id.song);
         SimpleDraweeView icon = song.findViewById(R.id.icon);
         TextView title = song.findViewById(R.id.title);
@@ -378,14 +418,62 @@ public class ClipGridFragment extends Fragment {
                 }
 
                 holder.ivDelete.setVisibility(clip.user.me ? View.VISIBLE : View.GONE);
+                holder.rlAction.setVisibility(clip.user.me ? View.VISIBLE : View.GONE);
 
                 holder.ivDelete.setOnClickListener(v -> {
                     confirmDeletion(clip.id);
                 });
+
+                holder.ivEdit.setOnClickListener(v -> {
+                    submitForDownload(clip);
+                });
+
+
             }catch (Exception e){
                 e.printStackTrace();
             }
         }
+    }
+
+    @AfterPermissionGranted(SharedConstants.REQUEST_CODE_PERMISSIONS_DOWNLOAD)
+    private void submitForDownload(Clip mClip) {
+
+        File clips = new File(getActivity().getBaseContext().getFilesDir(), "clips");
+        if (!clips.exists() && !clips.mkdirs()) {
+            Log.w(TAG, "Could not create directory at " + clips);
+        }
+
+        File fixed = TempUtil.createNewFile(clips, ".mp4");
+
+        WorkManager wm = WorkManager.getInstance(getActivity());
+        boolean async = getResources().getBoolean(R.bool.sharing_async_enabled);
+        OneTimeWorkRequest request;
+
+        wm.enqueue(request = VideoUtil.createDownloadRequest(mClip.video, fixed, async));
+
+        progress = KProgressHUD.create(getActivity())
+                .setStyle(KProgressHUD.Style.SPIN_INDETERMINATE)
+                .setLabel(getString(R.string.progress_title))
+                .setCancellable(false)
+                .show();
+        wm.getWorkInfoByIdLiveData(request.getId())
+                .observe(this, info -> {
+                    boolean ended = info.getState() == WorkInfo.State.CANCELLED
+                            || info.getState() == WorkInfo.State.FAILED
+                            || info.getState() == WorkInfo.State.SUCCEEDED;
+                    if (ended) {
+                        progress.dismiss();
+                    }
+
+                    if(info.getState()==WorkInfo.State.SUCCEEDED){
+                        Intent intent = new Intent(getActivity(), FilterActivity.class);
+                        intent.putExtra(FilterActivity.EXTRA_CLIP_ID, mClip.id);
+                        intent.putExtra(FilterActivity.EXTRA_CLIP_DESC, mClip.description);
+                        intent.putExtra(FilterActivity.EXTRA_VIDEO, fixed.getAbsolutePath());
+                        intent.putExtra(FilterActivity.EXTRA_SONG_ID, mClip.getSong());
+                        startActivity(intent);
+                    }
+                });
     }
 
     public static class ClipGridFragmentViewModel extends ViewModel {
@@ -429,7 +517,8 @@ public class ClipGridFragment extends Fragment {
         public View _private;
         public View disapproved;
         public TextView likes,tv_user_name,tvView;
-        public ImageView ivDelete,iv_user;
+        public ImageView ivDelete, ivEdit, iv_user;
+        public RelativeLayout rlAction;
 
         public ClipGridViewHolder(@NonNull View root) {
             super(root);
@@ -438,9 +527,11 @@ public class ClipGridFragment extends Fragment {
             disapproved = root.findViewById(R.id.disapproved);
             likes = root.findViewById(R.id.likes);
             ivDelete = root.findViewById(R.id.iv_delete);
+            ivEdit = root.findViewById(R.id.iv_edit);
             iv_user = root.findViewById(R.id.iv_user);
             tv_user_name = root.findViewById(R.id.tv_user_name);
             tvView = root.findViewById(R.id.tvView);
+            rlAction = root.findViewById(R.id.rlAction);
         }
     }
 
@@ -478,6 +569,8 @@ public class ClipGridFragment extends Fragment {
                             if (source != null) {
                                 source.invalidate();
                             }
+                        }else{
+                            Toast.makeText(getActivity(), "Something went wrong!", Toast.LENGTH_SHORT).show();
                         }
                     }
 

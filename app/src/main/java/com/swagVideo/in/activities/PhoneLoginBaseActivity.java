@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.InputType;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
@@ -22,6 +24,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.hbb20.CountryCodePicker;
 import com.kaopiz.kprogresshud.KProgressHUD;
@@ -88,6 +91,8 @@ public class PhoneLoginBaseActivity extends AppCompatActivity {
         boxotp.setVisibility(View.GONE);
         cc.setOnCountryChangeListener(() -> mModel.cc = cc.getSelectedCountryCodeAsInt());
         phone = findViewById(R.id.phone);
+        //TextInputEditText tietPhone = findViewById(R.id.tietPhone);
+
         cc.registerCarrierNumberEditText(phone.getEditText());
         phone.getEditText().setText(mModel.phone);
         phone.getEditText().addTextChangedListener(new TextWatcher() {
@@ -113,7 +118,6 @@ public class PhoneLoginBaseActivity extends AppCompatActivity {
             public void afterTextChanged(Editable editable) {
 //                mModel.otp = editable.toString();
                 mModel.otp = otpp;
-
             }
 
             @Override
@@ -242,7 +246,11 @@ public class PhoneLoginBaseActivity extends AppCompatActivity {
         generate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                generateOtp();
+                boolean digitsOnly = TextUtils.isDigitsOnly(mModel.phone);
+                if(digitsOnly && mModel.phone.length()==10)
+                    generateOtp();
+                else
+                    Toast.makeText(PhoneLoginBaseActivity.this, "Invalid mobile number!", Toast.LENGTH_SHORT).show();
             }
         });
         resend = findViewById(R.id.resend);
@@ -250,7 +258,12 @@ public class PhoneLoginBaseActivity extends AppCompatActivity {
         resend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                generateOtp();
+                boolean digitsOnly = TextUtils.isDigitsOnly(mModel.phone);
+                if(digitsOnly && mModel.phone.length()==10)
+                    generateOtp();
+                else
+                    Toast.makeText(PhoneLoginBaseActivity.this, "Invalid mobile number!", Toast.LENGTH_SHORT).show();
+
             }
         });
         verify = findViewById(R.id.verify);

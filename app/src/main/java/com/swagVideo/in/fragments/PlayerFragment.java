@@ -3,6 +3,7 @@ package com.swagVideo.in.fragments;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -72,6 +73,7 @@ import com.swagVideo.in.R;
 import com.swagVideo.in.SharedConstants;
 import com.swagVideo.in.activities.MainActivity;
 import com.swagVideo.in.activities.NearByVideoActivity;
+import com.swagVideo.in.activities.RecorderActivity;
 import com.swagVideo.in.common.VisibilityAware;
 import com.swagVideo.in.data.ClipDataSource;
 import com.swagVideo.in.data.api.REST;
@@ -116,6 +118,7 @@ public class PlayerFragment extends Fragment implements AnalyticsListener, Visib
     private SpinnerParticleSystem mParticleSystem;
     private ParticleView mParticleView;
     private View mPlay;
+    private View mSearch;
     private SimpleExoPlayer mPlayer;
     private PlayerView mPlayerView;
     private ProgressBar mProgressBar;
@@ -189,17 +192,47 @@ public class PlayerFragment extends Fragment implements AnalyticsListener, Visib
         if (mBufferingProgressBar != null) {
             mBufferingProgressBar.setVisibility(
                     state == Player.STATE_BUFFERING ? View.VISIBLE : View.GONE);
-        }
+          }
 
         if (state == Player.STATE_READY) {
             mModel1.duration = mPlayer.getDuration();
             Log.v(TAG, "Player video duration is " + mModel1.duration + ".");
-        }
+            viewCount(mClip.id);
+             }
 
         if (state == Player.STATE_ENDED && !mStopped) {
             EventBus.getDefault().post(new PlaybackEndedEvent(mClip.id));
             mStopped = true;
         }
+
+        }
+
+    private void viewCount(int id) {
+        REST rest = MainApplication.getContainer().get(REST.class);
+        rest.clipsView(mClip.id)
+                .enqueue(new Callback<ResponseBody>() {
+
+                    @Override
+                    public void onResponse(
+                            @Nullable Call<ResponseBody> call,
+                            @Nullable Response<ResponseBody> response
+                    ) {
+                        int code = response != null ? response.code() : -1;
+                        Log.v(TAG, "view clip returned " + code + '.');
+
+                        if (code == 200) {
+                           // EventBus.getDefault().post(new ResetPlayerSliderEvent());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(
+                            @Nullable Call<ResponseBody> call,
+                            @Nullable Throwable t
+                    ) {
+                        Log.e(TAG, "Failed to view clip.", t);
+                    }
+                });
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -286,8 +319,8 @@ public class PlayerFragment extends Fragment implements AnalyticsListener, Visib
         if (getResources().getBoolean(R.bool.music_notes_enabled)) {
             mParticleSystem = new SpinnerParticleSystem(SizeUtil.toPx(getResources(), 25));
             mParticleView = view.findViewById(R.id.particles);
-            mParticleView.setParticleSystem(mParticleSystem);
-            mParticleView.setTextureAtlasFactory(new SpinnerTextureAtlasFactory(requireContext()));
+           /* mParticleView.setParticleSystem(mParticleSystem);
+            mParticleView.setTextureAtlasFactory(new SpinnerTextureAtlasFactory(requireContext()));*/
         }
 
         View spacer = view.findViewById(R.id.spacer);
@@ -404,7 +437,8 @@ public class PlayerFragment extends Fragment implements AnalyticsListener, Visib
             mLikeCheckBox.setBackgroundResource(R.drawable.ic_button_like_filled);
         } else {
             mClip.likesCount--;
-            mLikeCheckBox.setBackgroundResource(R.drawable.ic_like);
+           // mLikeCheckBox.setBackgroundResource(R.drawable.ic_like);
+            mLikeCheckBox.setBackgroundResource(R.drawable.like);
         }
 
         mClip.liked(like);
@@ -467,6 +501,12 @@ public class PlayerFragment extends Fragment implements AnalyticsListener, Visib
                 ((MainActivity) requireActivity()).showClips(mClip.song.title, params);
             }
         });
+
+        mSearch = view.findViewById(R.id.iv_search);
+        mSearch.setOnClickListener(v -> {
+            ((MainActivity)requireActivity()).showSearch();
+        });
+
         mPlay = view.findViewById(R.id.play);
         mProgressBar = view.findViewById(R.id.progress);
        /* mProgressBar.setVisibility(
@@ -557,7 +597,6 @@ public class PlayerFragment extends Fragment implements AnalyticsListener, Visib
         CheckBox save = view.findViewById(R.id.save);
         save.setChecked(mClip.saved);
         save.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-
             @Override
             public void onCheckedChanged(CompoundButton v, boolean checked) {
                 if (mModel2.isLoggedIn()) {
@@ -676,7 +715,10 @@ public class PlayerFragment extends Fragment implements AnalyticsListener, Visib
             });
             song.setText(mClip.song.title);
         } else {
-            song.setOnClickListener(null);
+            //song.setOnClickListener(null);
+            song.setOnClickListener(view1 -> {
+                submitForUseAudio(mClip);
+            });
             song.setText(R.string.original_audio);
         }
 
@@ -734,6 +776,34 @@ public class PlayerFragment extends Fragment implements AnalyticsListener, Visib
         } else {
             cover.setVisibility(View.GONE);
         }*/
+    }
+
+
+    private void submitForUseAudio(Clip clip) {
+        KProgressHUD progress = KProgressHUD.create(getActivity())
+                .setStyle(KProgressHUD.Style.SPIN_INDETERMINATE)
+                .setLabel(getString(R.string.progress_title))
+                .setCancellable(false)
+                .show();
+        File downloaded = TempUtil.createNewFile(getActivity(), ".mp4");
+        OneTimeWorkRequest request = VideoUtil.createDownloadRequest(clip.video, downloaded, false);
+        WorkManager wm = WorkManager.getInstance(getActivity());
+        wm.enqueue(request);
+        wm.getWorkInfoByIdLiveData(request.getId())
+                .observe(getActivity(), info -> {
+                    boolean ended = info.getState() == WorkInfo.State.CANCELLED
+                            || info.getState() == WorkInfo.State.FAILED
+                            || info.getState() == WorkInfo.State.SUCCEEDED;
+                    if (ended) {
+                        progress.dismiss();
+                    }
+
+                    if (info.getState() == WorkInfo.State.SUCCEEDED) {
+                        Intent intent = new Intent(getActivity(), RecorderActivity.class);
+                        intent.putExtra(RecorderActivity.EXTRA_AUDIO, Uri.fromFile(downloaded));
+                        startActivity(intent);
+                    }
+                });
     }
 
     private void saveUnsave(boolean save) {
@@ -828,11 +898,11 @@ public class PlayerFragment extends Fragment implements AnalyticsListener, Visib
             return;
         }
 
-        mMusicDisc.startAnimation(AnimationUtils.loadAnimation(requireContext(), R.anim.rotate_360));
+       /* mMusicDisc.startAnimation(AnimationUtils.loadAnimation(requireContext(), R.anim.rotate_360));
         if (getResources().getBoolean(R.bool.music_notes_enabled)) {
             mParticleSystem.show(mParticleView.getWidth() / 2, mParticleView.getHeight() / 2);
             mParticleView.startRendering();
-        }
+        }*/
     }
 
     private void startPlayer() {
@@ -859,10 +929,14 @@ public class PlayerFragment extends Fragment implements AnalyticsListener, Visib
     }
 
     private void stopPlayer() {
-        mPlayer.setPlayWhenReady(false);
-        mPlay.setVisibility(View.VISIBLE);
-        stopDiscAnimation();
-        mHandler.removeCallbacks(mProgress);
+        try {
+            mPlayer.setPlayWhenReady(false);
+            mPlay.setVisibility(View.VISIBLE);
+            stopDiscAnimation();
+            mHandler.removeCallbacks(mProgress);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     @AfterPermissionGranted(SharedConstants.REQUEST_CODE_PERMISSIONS_DOWNLOAD)

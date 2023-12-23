@@ -475,7 +475,7 @@ public class CommentsBottomDialogFragment extends BottomSheetDialogFragment impl
                 }
             });
 
-            holder.ivLike.setOnClickListener(v -> {
+            holder.llLike.setOnClickListener(v -> {
                 likeUnlike(comment.id,comment.user.id, holder.like, holder.ivLike);
             });
 
@@ -528,13 +528,21 @@ public class CommentsBottomDialogFragment extends BottomSheetDialogFragment impl
                     @Nullable Call<ResponseBody> call,
                     @Nullable Response<ResponseBody> response
             ) {
-                try {
-                    String jsonOject = (response.body().string());
+                try {//{"error":false,"data":{"added":0},"message":"ja khusi!!"}
+                    String stringResponse = (response.body().string());
+                    JSONObject joResponse = new JSONObject(stringResponse);
                     int code = response != null ? response.code() : -1;
                     Log.v(TAG, "Updating like/unlike returned " + code + '.');
+                    if(code==200 && !joResponse.getBoolean("error") &&
+                            joResponse.getJSONObject("data").getInt("added")==1){
                     Glide.with(getActivity()).load(R.drawable.ic_button_like_filled).error(R.drawable.ic_like).into(ivLike);
                     int likeCount = Integer.parseInt(tvLike.getText().toString().trim()) + 1;
                     tvLike.setText(String.valueOf(likeCount));
+                    }else{
+                        Glide.with(getActivity()).load(R.drawable.ic_like).error(R.drawable.ic_like).into(ivLike);
+                        int likeCount = Integer.parseInt(tvLike.getText().toString().trim()) - 1;
+                        tvLike.setText(String.valueOf(likeCount));
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

@@ -2,6 +2,7 @@ package com.swagVideo.in.providers;
 
 import android.content.Context;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pixplicity.easyprefs.library.Prefs;
@@ -40,6 +41,7 @@ public class RetrofitProvider implements Provider {
                         Request request = chain.request();
                         String token =
                                 Prefs.getString(SharedConstants.PREF_SERVER_TOKEN, null);
+                      //  Log.d("token :: ",token);
                         if (!TextUtils.isEmpty(token)) {
                             request = request.newBuilder()
                                     .header("Authorization", "Bearer " + token)

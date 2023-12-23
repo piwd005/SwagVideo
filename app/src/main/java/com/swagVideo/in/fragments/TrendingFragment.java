@@ -172,7 +172,7 @@ public class TrendingFragment extends Fragment {
                     gradientText.setSpan(new TextGradient(Color.RED, Color.YELLOW, source.getHeading().length()),
                             0, gradientText.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                     /*
-        gradientText.setSpan(new TextGradient(Color.RED, Color.YELLOW, TvHeading.getLineHeight()),
+                    gradientText.setSpan(new TextGradient(Color.RED, Color.YELLOW, TvHeading.getLineHeight()),
                 0, gradientText.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);*/
                     SpannableStringBuilder sb = new SpannableStringBuilder();
                     sb.append(gradientText);
@@ -267,9 +267,10 @@ public class TrendingFragment extends Fragment {
 
         for (int i = 0; i < sliderList.size(); i++) {
             sliderItems.add(new SliderItem(sliderList.get(i).getName(), sliderList.get(i).getImage()));
-       /* sliderItems.add(new SliderItem("Text Here", R.drawable.slideone));
-        sliderItems.add(new SliderItem("Text Here", R.drawable.slidetwo));
-        sliderItems.add(new SliderItem("Text Here", R.drawable.slidethree));*/
+        /*sliderItems.add(new SliderItem("Text Here", R.drawable.refer_earn_banner));
+        sliderItems.add(new SliderItem("Text Here", R.drawable.video_coin_banner));
+        sliderItems.add(new SliderItem("Text Here", R.drawable.flash_back_banner));
+        sliderItems.add(new SliderItem("Text Here", R.drawable.swagvideo_contest));*/
         }
 
         adapter = new SliderAdapterExample(getActivity(), sliderItems);
@@ -308,7 +309,8 @@ public class TrendingFragment extends Fragment {
                         JSONObject jsonObjectData = jsonObject.getJSONObject("data");
 
                         ArrayList<Slider>
-                                sliderList = new Gson().fromJson(jsonObject.getJSONObject("data").getString("list"), new TypeToken<List<Slider>>() {
+                                sliderList = new Gson().fromJson(jsonObject.getJSONObject("data").getString("list"),
+                                new TypeToken<List<Slider>>() {
                         }.getType());
 
                         setSlider(sliderList);

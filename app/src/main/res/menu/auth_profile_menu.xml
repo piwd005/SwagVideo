@@ -1,20 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
         android:id="@+id/edit"
-        android:title="@string/edit_label" />
+        android:title="@string/edit_label"
+        app:iconTint="@color/white"
+        android:iconTintMode="src_in"
+        android:icon="@drawable/ic_edit"/>
+
+    <item
+        android:id="@+id/wallet"
+        android:title="@string/wallet_label"
+        app:iconTint="@color/white"
+        android:icon="@drawable/img_wallet"/>
 
     <item
         android:id="@+id/share"
-        android:title="@string/share_label" />
+        android:title="@string/share_label"
+        app:iconTint="@color/white"
+        android:icon="@drawable/ic_share2"/>
 
     <item
         android:id="@+id/verification"
-        android:title="@string/verification_label" />
+        android:title="@string/verification_label"
+        app:iconTint="@color/white"
+        android:icon="@drawable/img_verification" />
+
+    <item
+        android:id="@+id/guidelines"
+        android:title="@string/guidelines_label"
+        app:iconTint="@color/white"
+        android:icon="@drawable/img_guidelines" />
+
+    <item
+        android:id="@+id/language"
+        android:title="@string/language_label1"
+        app:iconTint="@color/white"
+        android:icon="@drawable/img_language"/>
+
+    <item
+        android:id="@+id/feedback"
+        android:title="@string/feedback_label"
+        app:iconTint="@color/white"
+        android:icon="@drawable/img_feedback"/>
 
     <item
         android:id="@+id/settings"
-        android:title="@string/settings_label" />
+        android:title="@string/settings_label"
+        app:iconTint="@color/white"
+        android:icon="@drawable/img_settings"/>
 
 </menu>

@@ -51,7 +51,8 @@ public class WatermarkWorker extends ListenableWorker {
                         .setTicker(context.getString(R.string.notification_watermark_title))
                         .setContentText(context.getString(R.string.notification_watermark_description))
                         .setSmallIcon(R.drawable.ic_baseline_movie_filter_24)
-                        .setColor(ContextCompat.getColor(context, R.color.colorPrimary))
+                       // .setColor(ContextCompat.getColor(context, R.color.colorPrimary))
+                        .setColor(ContextCompat.getColor(context, R.color.colorYellow))
                         .setOngoing(true)
                         .setOnlyAlertOnce(true)
                         .build();

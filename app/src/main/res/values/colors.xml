@@ -22,6 +22,7 @@
     <color name="colorJava">#1bd0d1</color>
     <color name="colorGrey">#878787</color>
     <color name="colorGrey1">#121212</color>
+    <color name="colorGrey2">#292a2c</color>
     <color name="colorLightGrey">#DADADA</color>
 
     <color name="colorIntro1Background">@color/colorPrimary</color>

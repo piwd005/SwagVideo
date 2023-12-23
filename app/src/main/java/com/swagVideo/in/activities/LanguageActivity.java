@@ -2,11 +2,14 @@ package com.swagVideo.in.activities;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -18,6 +21,9 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.kaopiz.kprogresshud.KProgressHUD;
 import com.pixplicity.easyprefs.library.Prefs;
 
 import java.util.ArrayList;
@@ -27,9 +33,21 @@ import java.util.Set;
 
 import com.swagVideo.in.R;
 import com.swagVideo.in.SharedConstants;
+import com.swagVideo.in.data.api.REST;
+import com.swagVideo.in.data.models.LanguageModel;
+import com.swagVideo.in.data.models.Slider;
 import com.swagVideo.in.data.models.User;
 import com.swagVideo.in.utils.LocaleUtil;
+
+import org.json.JSONObject;
+
 import me.everything.android.ui.overscroll.OverScrollDecoratorHelper;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class LanguageActivity extends AppCompatActivity {
 
@@ -39,6 +57,8 @@ public class LanguageActivity extends AppCompatActivity {
     private boolean mFirstLaunch;
     private LanguageActivityViewModel mModel;
     private User mUser;
+    private ProgressBar loading;
+    private KProgressHUD progress;
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -64,13 +84,28 @@ public class LanguageActivity extends AppCompatActivity {
         findViewById(R.id.header_back).setVisibility(View.GONE);
         TextView title = findViewById(R.id.header_title);
         title.setText(R.string.language_label);
+        loading = findViewById(R.id.loading);
+
+         progress = KProgressHUD.create(this)
+                .setStyle(KProgressHUD.Style.SPIN_INDETERMINATE)
+                .setLabel(getString(R.string.progress_title))
+                .setCancellable(false);
+
+
         ImageButton done = findViewById(R.id.header_more);
         done.setImageResource(R.drawable.ic_baseline_check_24);
-        done.setOnClickListener(view -> commitSelection());
+        done.setOnClickListener(view -> {
+            //progress.show();
+            loading.setVisibility(View.VISIBLE);
+            commitSelection();
+        });
         mFirstLaunch = getIntent().getBooleanExtra(EXTRA_SPLASH, false);
         mUser = getIntent().getParcelableExtra(EXTRA_USER);
         mModel = new ViewModelProvider(this).get(LanguageActivityViewModel.class);
-        String[] codes = getResources().getStringArray(R.array.language_codes);
+
+        getLanguage();
+
+       /* String[] codes = getResources().getStringArray(R.array.language_codes);
         int[] colors = getResources().getIntArray(R.array.language_colors);
         String[] names = getResources().getStringArray(R.array.language_names);
         List<Language> options = new ArrayList<>();
@@ -88,13 +123,92 @@ public class LanguageActivity extends AppCompatActivity {
         languages.setAdapter(adapter);
         languages.setLayoutManager(new GridLayoutManager(this, 3));
         OverScrollDecoratorHelper.setUpOverScroll(
-                languages, OverScrollDecoratorHelper.ORIENTATION_VERTICAL);
+                languages, OverScrollDecoratorHelper.ORIENTATION_VERTICAL);*/
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        getLanguage();
+    }
+
+    public void getLanguage() {
+        loading.setVisibility(View.VISIBLE);
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(getResources().getString(R.string.server_url))
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        REST api = retrofit.create(REST.class);
+        try {
+            Call<ResponseBody> call = api.getLanguageList();
+            call.enqueue(new Callback<ResponseBody>() {
+                @Override
+                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+
+                    try {
+                        Log.i("fetchlanguageData", response.body().toString());
+                        JSONObject jsonObject = new JSONObject(response.body().string());
+                        JSONObject jsonObjectData = jsonObject.getJSONObject("data");
+
+                        ArrayList<LanguageModel>
+                                languageList = new Gson().fromJson(jsonObject.getJSONObject("data").getString("list"), new TypeToken<List<LanguageModel>>() {
+                        }.getType());
+
+                        setLanguage(languageList);
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        loading.setVisibility(View.GONE);
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    loading.setVisibility(View.GONE);
+                }
+            });
+        } catch (Exception e) {
+            loading.setVisibility(View.GONE);
+            e.printStackTrace();
+        }
+    }
+
+    private void setLanguage(ArrayList<LanguageModel> languageList) {
+        try {
+            List<Language> options = new ArrayList<>();
+            for (int i = 0; i < languageList.size(); i++) {
+                Language language = new Language();
+                language.code = languageList.get(i).getSrtCode();
+                language.color = Color.parseColor("#" + languageList.get(i).getcCode());
+                language.name = languageList.get(i).getName();
+                language.selected = mModel.languages.contains(languageList.get(i).getcCode());
+                options.add(language);
+            }
+
+            LanguageAdapter adapter = new LanguageAdapter(options);
+            RecyclerView languages = findViewById(R.id.languages);
+            languages.setVisibility(View.VISIBLE);
+            languages.setAdapter(adapter);
+            languages.setLayoutManager(new GridLayoutManager(this, 3));
+            OverScrollDecoratorHelper.setUpOverScroll(
+                    languages, OverScrollDecoratorHelper.ORIENTATION_VERTICAL);
+
+            loading.setVisibility(View.GONE);
+        }catch (Exception e){
+            e.printStackTrace();
+            loading.setVisibility(View.GONE);
+        }
     }
 
     private void commitSelection() {
+
         Prefs.putStringSet(SharedConstants.PREF_PREFERRED_LANGUAGES, mModel.languages);
         if (mFirstLaunch) {
             startActivity(new Intent(this, MainActivity.class));
+            //progress.dismiss();
         }
 
         finish();

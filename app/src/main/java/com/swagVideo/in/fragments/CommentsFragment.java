@@ -469,7 +469,7 @@ public class CommentsFragment extends Fragment implements SocialSpanUtil.OnSocia
                     JSONObject jsonObject = new JSONObject(response.body().string());
                     int code = response != null ? response.code() : -1;
                     Log.v(TAG, "Updating like/unlike returned " + code + '.');
-                    Glide.with(getActivity()).load(R.drawable.ic_button_like_filled).error(R.drawable.ic_like).into(ivLike);
+                    Glide.with(getActivity()).load(R.drawable.ic_button_like_filled).error(R.drawable.img_heart).into(ivLike);
                     int likeCount = Integer.parseInt(tvLike.getText().toString().trim()) + 1;
                     tvLike.setText(String.valueOf(likeCount));
                 } catch (Exception e) {

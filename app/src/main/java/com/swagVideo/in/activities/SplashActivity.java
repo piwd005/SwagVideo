@@ -130,8 +130,9 @@ public class SplashActivity extends AppCompatActivity {
         }
         TextView tvIndia = findViewById(R.id.tv_india);
 
-        SpannableString gradientText = new SpannableString("MADE IN & FOR INDIA");
-        gradientText.setSpan(new TextGradient(Color.RED, Color.YELLOW, tvIndia.getLineHeight()),
+       // SpannableString gradientText = new SpannableString("MADE IN & FOR INDIA");
+        SpannableString gradientText = new SpannableString("DIKHAO APNA SWAG");
+        gradientText.setSpan(new TextGradient(Color.parseColor("#FF023B"), Color.parseColor("#FCE114"), tvIndia.getLineHeight()),
                 0, gradientText.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         SpannableStringBuilder sb = new SpannableStringBuilder();
         sb.append(gradientText);
@@ -338,6 +339,7 @@ public class SplashActivity extends AppCompatActivity {
 
     private void startMainActivity(@Nullable User user, @Nullable Uri data) {
         Intent intent = new Intent(this, MainActivity.class);
+        //Intent intent = new Intent(this, VerificationActivity.class);
         intent.putExtra(MainActivity.EXTRA_USER, user);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         if (data != null) {

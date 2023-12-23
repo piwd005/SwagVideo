@@ -46,7 +46,7 @@
     <string name="empty_articles">No news articles found to display.</string>
     <string name="empty_clips">No clips found to display.</string>
     <string name="title_comments">Comments</string>
-   <!-- <string name="empty_comments">No comments found to display.</string>-->
+    <!-- <string name="empty_comments">No comments found to display.</string>-->
     <string name="empty_comments">Be the first to comment.</string>
     <string name="empty_conversations">No conversations found to display.</string>
     <string name="empty_followers">No followers found to display.</string>
@@ -81,7 +81,11 @@
     <string name="google_label">Continue with Google</string>
     <string name="hashtags_label">Hashtags</string>
     <string name="instagram_label">Instagram</string>
+    <string name="language_label1">Language</string>
     <string name="language_label">Preferred languages</string>
+    <string name="feedback_label">Feedback</string>
+    <string name="guidelines_label">Guidelines</string>
+    <string name="wallet_label">Wallet</string>
     <string name="legal_label">Legal</string>
     <string name="likes_label">Likes</string>
     <string name="linkedin_label">LinkedIn</string>
@@ -182,6 +186,7 @@
     <string name="search_song_hint">Search song or artist…</string>
     <string name="search_music_hint">Search music</string>
     <string name="search_label">Search</string>
+    <string name="search_hint_video">Search video…</string>
     <string name="see_all_label" formatted="false">See all %s clips</string>
     <string name="see_less_label">see less</string>
     <string name="see_more_label">see more</string>
@@ -251,6 +256,7 @@
     <string name="trending">Trending</string>
     <string name="recent">Recent</string>
     <string name="hashtag">Hashtag</string>
+    <string name="flash">Flash</string>
 
 
 </resources>

@@ -2,9 +2,13 @@ package com.swagVideo.in.activities;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.DownloadManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.IntentSender;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
@@ -12,6 +16,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Shader;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -49,7 +54,6 @@ import androidx.core.content.FileProvider;
 import androidx.core.widget.ImageViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
@@ -57,7 +61,6 @@ import androidx.navigation.NavBackStackEntry;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
-import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
@@ -87,6 +90,7 @@ import com.google.android.play.core.install.model.UpdateAvailability;
 import com.google.android.play.core.review.ReviewInfo;
 import com.google.android.play.core.review.ReviewManager;
 import com.google.android.play.core.review.ReviewManagerFactory;
+import com.google.android.play.core.tasks.OnSuccessListener;
 import com.google.firebase.dynamiclinks.DynamicLink;
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.dynamiclinks.ShortDynamicLink;
@@ -166,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String EXTRA_REGISTERED = "registered";
     public static final String EXTRA_USER = "user";
     private static final String TAG = "MainActivity";
-
+    private KProgressHUD progress;
     private double currentLatitude;
     private double currentLongitude;
     private GpsTracker gpsTracker;
@@ -187,6 +191,7 @@ public class MainActivity extends AppCompatActivity {
     };
 
    public static TextView badge;
+    public static final int APPUPDATE = 100;
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -211,6 +216,8 @@ public class MainActivity extends AppCompatActivity {
             updateLoginState(token);
         } else if (requestCode == SharedConstants.REQUEST_CODE_PICK_VIDEO && resultCode == RESULT_OK && data != null) {
             proceedToTrimmer(data.getData());
+        }else if(requestCode == APPUPDATE && resultCode == Activity.RESULT_OK){
+            checkAppUpdate();
         }
 
         mCallbackManager.onActivityResult(requestCode, resultCode, data);
@@ -267,6 +274,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if(getLocation())
+            updateLocation();
+
+        registerReceiver(gpsReceiver, new IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION));
+
         try {
             if (getIntent().getExtras().getString("from").equals("nearby")) {
                 Bundle args = new Bundle();
@@ -288,6 +300,8 @@ public class MainActivity extends AppCompatActivity {
         } else {
             Log.w(TAG, "No ad configured for login page.");
         }
+
+        checkAppUpdate();
 
         mUpdateManager = AppUpdateManagerFactory.create(this);
         mModel = new ViewModelProvider(this).get(MainActivityViewModel.class);
@@ -518,8 +532,8 @@ public class MainActivity extends AppCompatActivity {
                                 permissions);
                     }
                 } else if (EventBus.getDefault().hasSubscriberForEvent(ResolveRecordingOptionsEvent.class)) {
-                    EventBus.getDefault().post(new ResolveRecordingOptionsEvent());
-                } else {
+                   /* EventBus.getDefault().post(new ResolveRecordingOptionsEvent());
+                } else {*/
                     startActivity(new Intent(this, RecorderActivity.class));
                 }
             } else {
@@ -615,6 +629,54 @@ public class MainActivity extends AppCompatActivity {
         setSlider();
     }
 
+
+
+    private void checkAppUpdate() {
+        // Toast.makeText(mContext, "check update", Toast.LENGTH_SHORT).show();
+        // Creates instance of the manager.
+        final AppUpdateManager appUpdateManager = AppUpdateManagerFactory.create(this);
+
+        // Returns an intent object that you use to check for an update.
+        com.google.android.play.core.tasks.Task<AppUpdateInfo> appUpdateInfoTask = appUpdateManager.getAppUpdateInfo();
+
+        // Checks that the platform will allow the specified type of update.
+        appUpdateInfoTask.addOnSuccessListener(new OnSuccessListener<AppUpdateInfo>() {
+            @Override
+            public void onSuccess(AppUpdateInfo appUpdateInfo) {
+                if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                        // For a flexible update, use AppUpdateType.FLEXIBLE
+                        && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)) {
+                    //  Toast.makeText(mContext, "update available", Toast.LENGTH_SHORT).show();
+                    updateApp(appUpdateManager, appUpdateInfo);
+                } else {
+                    updateApp(appUpdateManager, appUpdateInfo);
+                    //  Toast.makeText(mContext, "update not available", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+    }
+
+    private void updateApp(AppUpdateManager appUpdateManager, AppUpdateInfo appUpdateInfo) {
+        try {
+            //Toast.makeText(mContext, "insdie update", Toast.LENGTH_SHORT).show();
+            appUpdateManager.startUpdateFlowForResult(
+                    // Pass the intent that is returned by 'getAppUpdateInfo()'.
+                    appUpdateInfo,
+                    // Or 'AppUpdateType.FLEXIBLE' for flexible updates.
+                    AppUpdateType.FLEXIBLE,
+                    // The current activity making the update request.
+                    this,
+                    // Include a request code to later monitor this update request.
+                    APPUPDATE);
+        } catch (IntentSender.SendIntentException e) {
+
+            // Toast.makeText(mContext, "exception in update", Toast.LENGTH_SHORT).show();
+
+            e.printStackTrace();
+        }
+    }
+
     private void updateLocation() {
 
             Retrofit retrofit = new Retrofit.Builder()
@@ -636,12 +698,16 @@ public class MainActivity extends AppCompatActivity {
 
                         } catch (Exception e) {
                             e.printStackTrace();
+                            Toast.makeText(MainActivity.this, "exception : "+e.toString(), Toast.LENGTH_SHORT).show();
+
                         }
                     }
 
                     @Override
                     public void onFailure(Call<ResponseBody> call, Throwable t) {
                         t.printStackTrace();
+                        Toast.makeText(MainActivity.this, "exception : "+t.toString(), Toast.LENGTH_SHORT).show();
+
                     }
                 });
             } catch (Exception e) {
@@ -697,7 +763,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     mUpdateManager.startUpdateFlowForResult(
                             info,
-                            AppUpdateType.IMMEDIATE,
+                            AppUpdateType.FLEXIBLE,
                             this,
                             SharedConstants.REQUEST_CODE_UPDATE_APP);
                 } catch (Exception e) {
@@ -709,8 +775,6 @@ public class MainActivity extends AppCompatActivity {
             reloadProfile();
         }
 
-        if(getLocation())
-            updateLocation();
     }
 
     @Override
@@ -1008,6 +1072,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void share(Clip clip, @Nullable SharingTarget target) {
+
         if (getResources().getBoolean(R.bool.sharing_links_enabled)) {
             shareLink(clip, target);
         } else {
@@ -1038,6 +1103,11 @@ public class MainActivity extends AppCompatActivity {
 
             if (async) {
                 Toast.makeText(this, R.string.message_sharing_async, Toast.LENGTH_SHORT).show();
+                progress = KProgressHUD.create(this)
+                        .setStyle(KProgressHUD.Style.SPIN_INDETERMINATE)
+                        .setLabel(getString(R.string.progress_title))
+                        .setCancellable(false)
+                        .show();
             } else {
                 KProgressHUD progress = KProgressHUD.create(this)
                         .setStyle(KProgressHUD.Style.SPIN_INDETERMINATE)
@@ -1058,6 +1128,8 @@ public class MainActivity extends AppCompatActivity {
             wm.getWorkInfoByIdLiveData(request.getId())
                     .observe(this, info -> {
                         if (info.getState() == WorkInfo.State.SUCCEEDED) {
+                            if(progress !=null)
+                            progress.dismiss();
                             shareVideoFile(this, fixed, target);
                         }
                     });
@@ -1355,6 +1427,10 @@ public class MainActivity extends AppCompatActivity {
         NavDirections direction = MainNavigationDirections.actionShowSearch();
         findNavController().navigate(direction);
     }
+  /*  public void showSearchVideo() {
+        NavDirections direction = MainNavigationDirections.actionShowSearchVideo();
+        findNavController().navigate(direction);
+    }*/
 
     public void showSharingOptions(Clip clip) {
         if (getResources().getBoolean(R.bool.sharing_sheet_enabled)) {
@@ -1722,7 +1798,7 @@ public class MainActivity extends AppCompatActivity {
             if(currentLatitude>0 && currentLongitude>0)
                 return true;
             else {
-                getLocation();
+                //getLocation();
                 return false;
             }
         } else {
@@ -1731,4 +1807,17 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
     }
+
+    private BroadcastReceiver gpsReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().matches(LocationManager.PROVIDERS_CHANGED_ACTION)) {
+                //Do your stuff on GPS status change
+                String s = intent.getDataString();
+                Toast.makeText(MainActivity.this, "success : "+s, Toast.LENGTH_SHORT).show();
+            }
+        }
+    };
+
+
 }

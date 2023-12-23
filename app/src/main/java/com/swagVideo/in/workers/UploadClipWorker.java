@@ -48,6 +48,7 @@ public class UploadClipWorker extends Worker {
     public static final String KEY_SCREENSHOT = "screenshot";
     public static final String KEY_SONG = "song";
     public static final String KEY_VIDEO = "video";
+    public static final String KEY_CLIP_ID = "clip_id";
     public static final String KEY_LANGUAGE = "language";
     public static final String KEY_LOCATION = "location";
     public static final String KEY_LATITUDE = "latitude";
@@ -70,7 +71,8 @@ public class UploadClipWorker extends Worker {
                         .setTicker(context.getString(R.string.notification_upload_title))
                         .setContentText(context.getString(R.string.notification_upload_description))
                         .setSmallIcon(R.drawable.ic_baseline_publish_24)
-                        .setColor(ContextCompat.getColor(context, R.color.colorPrimary))
+                        //.setColor(ContextCompat.getColor(context, R.color.colorPrimary))
+                        .setColor(ContextCompat.getColor(context, R.color.colorYellow))
                         .setOngoing(true)
                         .setOnlyAlertOnce(true)
                         .addAction(R.drawable.ic_baseline_close_24, cancel, intent)
@@ -87,6 +89,7 @@ public class UploadClipWorker extends Worker {
         File screenshot = new File(getInputData().getString(KEY_SCREENSHOT));
         File preview = new File(getInputData().getString(KEY_PREVIEW));
         Integer songId = getInputData().getInt(KEY_SONG, -1);
+        Integer clipId = getInputData().getInt(KEY_CLIP_ID, 0);
         if (songId <= 0) {
             songId = null;
         }
@@ -112,7 +115,7 @@ public class UploadClipWorker extends Worker {
         boolean success = false;
         try {
             success = doActualWork(
-                    video, screenshot, preview, songId, description, language, (int)duration,
+                    clipId,video, screenshot, preview, songId, description, language, (int)duration,
                     isPrivate, hasComments, location, latitude, longitude, tag);
         } catch (Exception e) {
             Log.e(TAG, "Failed to upload clip to server.", e);
@@ -195,6 +198,7 @@ public class UploadClipWorker extends Worker {
     }
 
     private boolean doActualWork(
+            int clipId,
             File video,
             File screenshot,
             File preview,
@@ -210,21 +214,41 @@ public class UploadClipWorker extends Worker {
             String tag
     ) throws IOException {
         REST rest = MainApplication.getContainer().get(REST.class);
-        Call<Wrappers.Single<Clip>> call = rest.clipsCreate(
-                MultipartBody.Part.createFormData("video", "video.mp4", RequestBody.create(video, null)),
-                MultipartBody.Part.createFormData("screenshot", "screenshot.png", RequestBody.create(screenshot, null)),
-                MultipartBody.Part.createFormData("preview", "preview.gif", RequestBody.create(preview, null)),
-                songId != null ? RequestBody.create(songId + "", null) : null,
-                description != null ? RequestBody.create(description, null) : null,
-                RequestBody.create(language, null),
-                RequestBody.create(isPrivate ? "1" : "0", null),
-                RequestBody.create(hasComments ? "1" : "0", null),
-                RequestBody.create(duration + "", null),
-                location != null ? RequestBody.create(location, null) : null,
-                latitude != null ? RequestBody.create(latitude + "", null) : null,
-                longitude != null ? RequestBody.create(longitude + "", null) : null,
-                tag != null ? RequestBody.create(tag, null) : null
-        );
+        Call<Wrappers.Single<Clip>> call;
+        if(clipId == 0) {
+            call = rest.clipsCreate(
+                    MultipartBody.Part.createFormData("video", "video.mp4", RequestBody.create(video, null)),
+                    MultipartBody.Part.createFormData("screenshot", "screenshot.png", RequestBody.create(screenshot, null)),
+                    MultipartBody.Part.createFormData("preview", "preview.gif", RequestBody.create(preview, null)),
+                    songId != null ? RequestBody.create(songId + "", null) : null,
+                    description != null ? RequestBody.create(description, null) : null,
+                    RequestBody.create(language, null),
+                    RequestBody.create(isPrivate ? "1" : "0", null),
+                    RequestBody.create(hasComments ? "1" : "0", null),
+                    RequestBody.create(duration + "", null),
+                    location != null ? RequestBody.create(location, null) : null,
+                    latitude != null ? RequestBody.create(latitude + "", null) : null,
+                    longitude != null ? RequestBody.create(longitude + "", null) : null,
+                    tag != null ? RequestBody.create(tag, null) : null
+            );
+        }else {
+            call = rest.clipsUpdate(
+                    clipId ,
+                    MultipartBody.Part.createFormData("video", "video.mp4", RequestBody.create(video, null)),
+                    MultipartBody.Part.createFormData("screenshot", "screenshot.png", RequestBody.create(screenshot, null)),
+                    MultipartBody.Part.createFormData("preview", "preview.gif", RequestBody.create(preview, null)),
+                    songId != null ? RequestBody.create(songId + "", null) : null,
+                    description != null ? RequestBody.create(description, null) : null,
+                    RequestBody.create(language, null),
+                    RequestBody.create(isPrivate ? "1" : "0", null),
+                    RequestBody.create(hasComments ? "1" : "0", null),
+                    RequestBody.create(duration + "", null),
+                    location != null ? RequestBody.create(location, null) : null,
+                    latitude != null ? RequestBody.create(latitude + "", null) : null,
+                    longitude != null ? RequestBody.create(longitude + "", null) : null,
+                    tag != null ? RequestBody.create(tag, null) : null
+            );
+        }
         Response<Wrappers.Single<Clip>> response = null;
         try {
             response = call.execute();

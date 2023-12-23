@@ -71,6 +71,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -225,7 +228,18 @@ public class NearbyFragment extends Fragment {
                      }
             });
 
-            tvKm.setText(source.getKm()+" Km");
+            //tvKm.setText(source.getKm()+" Km");
+            String splitNum =source.getKm();
+            if(source.getKm().length()>10)
+                splitNum=splitNum.substring(0,9);
+           /* Double num = Double.parseDouble(splitNum);
+            BigDecimal bd = new BigDecimal(num).setScale(2, RoundingMode.HALF_UP);
+            double newNum = bd.doubleValue();
+            DecimalFormat decfor = new DecimalFormat("0.00");*/
+
+            String value = String.format("%.2f", Double.parseDouble(splitNum));
+           tvKm.setText(value+" Km");
+
             tvUserName.setText(source.getUser().name);
 
             Glide.with(this).load(source.getUser().photo).fitCenter().error(R.drawable.photo_placeholder).into(ivUser);

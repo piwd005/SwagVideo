@@ -7,7 +7,7 @@
     android:id="@+id/rl_profile"
     android:gravity="center_horizontal"
     android:orientation="vertical"
-    android:background="@drawable/comment">
+    android:background="@drawable/comment1">
 
     <View
         android:layout_width="match_parent"
