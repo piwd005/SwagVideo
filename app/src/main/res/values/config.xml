@@ -7,7 +7,7 @@
     <string name="server_api_key" translatable="false">SVSHIOGVNTXT3ZHI3I85ZXWXAVVAHNX9</string>
     <!--<string name="server_url" translatable="false">https://project.primacyinfotech.com/SwagVideo/api/</string>-->
     <!--<string name="server_url" translatable="false">https://fl.primacyinfotech.com/swagvideo/api/</string>-->
-    <string name="server_url" translatable="false">https://swagvideo.in/api/</string>
+    <string name="server_url" translatable="false">https://swagvideo.co.in/api/</string>
     <string name="image_base_url" translatable="false">https://swag.ap-south-1.linodeobjects.com/</string>
 
     <bool name="ssl_pinning_enabled">false</bool>
